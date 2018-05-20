@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bretkikehara/proxy-test2/app"
+	"github.com/bretkikehara/proxy/app"
 )
 
 func main() {

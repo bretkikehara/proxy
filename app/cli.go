@@ -9,28 +9,42 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bretkikehara/proxy-test2/proxy"
+	"github.com/bretkikehara/proxy/proxy"
 
 	"gopkg.in/urfave/cli.v2"
 )
 
-var testCmd = &cli.Command{
-	Name:   "test",
+var cliCmd = &cli.Command{
+	Name:   "cli",
 	Usage:  "run the proxy server",
-	Action: testFn,
-	Flags:  []cli.Flag{},
+	Action: cliFn,
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "port",
+			Aliases: []string{"p"},
+			Value:   "8889",
+			Usage:   "proxy server port",
+		},
+		&cli.StringFlag{
+			Name:    "url",
+			Aliases: []string{"u"},
+			Value:   "http://example.com",
+			Usage:   "URL to retrieve",
+		},
+	},
 }
 
-func testFn(ctx *cli.Context) error {
+func cliFn(ctx *cli.Context) error {
 	var wg sync.WaitGroup
 	var closePxy func()
 	var err error
 
 	wg.Add(1)
 	go func() {
-		closePxy, err = proxy.New(&proxy.Config{
+		closePxy = proxy.New(&proxy.Config{
 			Proto: "http",
 		})
+		fmt.Printf("proxy server ready\n")
 		defer wg.Done()
 	}()
 	wg.Wait()
@@ -40,10 +54,10 @@ func testFn(ctx *cli.Context) error {
 	if closePxy != nil {
 		defer closePxy()
 	}
-	return fetchURL("http://example.com")
+	return fetchURL(ctx.String("url"), "127.0.0.1:"+ctx.String("port"))
 }
 
-func fetchURL(ur string) error {
+func fetchURL(ur string, pxyServer string) error {
 	fmt.Printf("Making request\n")
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -53,11 +67,10 @@ func fetchURL(ur string) error {
 				DualStack: true,
 			}).DialContext,
 			Proxy: http.ProxyURL(&url.URL{
-				Host: "127.0.0.1:8888",
+				Host: pxyServer,
 			}),
 		},
 	}
-
 	var resp *http.Response
 	var err error
 	resp, err = c.Get(ur)
@@ -66,6 +79,7 @@ func fetchURL(ur string) error {
 	}
 	defer resp.Body.Close()
 
+	fmt.Printf("Parsing the resp\n")
 	var body []byte
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {

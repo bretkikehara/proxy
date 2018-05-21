@@ -10,10 +10,10 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-var proxyCmd = &cli.Command{
-	Name:   "proxy",
+var serveCmd = &cli.Command{
+	Name:   "serve",
 	Usage:  "run the proxy server",
-	Action: proxyFn,
+	Action: serveFn,
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:    "port",
@@ -37,9 +37,9 @@ func WaitForCtrlC() {
 	end_waiter.Wait()
 }
 
-func proxyFn(ctx *cli.Context) error {
+func serveFn(ctx *cli.Context) error {
 	close := proxy.New(&proxy.Config{
-		Proto: "http",
+		Port: ctx.String("port"),
 	})
 	defer close()
 	WaitForCtrlC()

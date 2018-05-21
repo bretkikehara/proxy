@@ -28,7 +28,7 @@ var cliCmd = &cli.Command{
 		&cli.StringFlag{
 			Name:    "url",
 			Aliases: []string{"u"},
-			Value:   "http://example.com",
+			Value:   "http://www.example.com",
 			Usage:   "URL to retrieve",
 		},
 	},
@@ -42,7 +42,10 @@ func cliFn(ctx *cli.Context) error {
 	wg.Add(1)
 	go func() {
 		closePxy = proxy.New(&proxy.Config{
-			Proto: "http",
+			Port:   ctx.String("port"),
+			Proto:  ctx.String("proto"),
+			SSLKey: ctx.String("ssl-key"),
+			SSLPem: ctx.String("ssl-pem"),
 		})
 		fmt.Printf("proxy server ready\n")
 		defer wg.Done()
@@ -69,12 +72,16 @@ func fetchURL(ur string, pxyServer string) error {
 			Proxy: http.ProxyURL(&url.URL{
 				Host: pxyServer,
 			}),
+			// TLSClientConfig: &tls.Config{
+			// 	InsecureSkipVerify: true,
+			// },
 		},
 	}
 	var resp *http.Response
 	var err error
 	resp, err = c.Get(ur)
 	if err != nil {
+		fmt.Printf("Failed to connect: %s\n", err)
 		return err
 	}
 	defer resp.Body.Close()

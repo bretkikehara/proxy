@@ -14,7 +14,8 @@ var App = &cli.App{
 	},
 	Version: "1.0.0",
 	Commands: []*cli.Command{
-		proxyCmd,
 		cliCmd,
+		serveCmd,
+		testCmd,
 	},
 }
